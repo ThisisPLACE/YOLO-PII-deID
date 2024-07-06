@@ -1,5 +1,5 @@
 ultralytics==8.2.48
-opencv-python==4.10.0.84
+opencv-python==4.8.1.78
 sahi==0.11.16
 flake8==7.1.0
 black==24.4.2
