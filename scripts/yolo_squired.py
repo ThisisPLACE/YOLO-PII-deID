@@ -46,25 +46,26 @@ def generate_unique_run_title(images_dir):
     base_run_title = f"run_{dir_name}"
     suffix_num = 1
     while os.path.exists(
-        os.path.join(
-            os.path.dirname(images_dir), f"{base_run_title}_{suffix_num}"
-        )
+        os.path.join(os.path.dirname(images_dir), f"{base_run_title}_{suffix_num}")
     ):
         suffix_num += 1
     unique_run_title = f"{base_run_title}_{suffix_num}"
     return unique_run_title
 
 
-def process_labels_file(
-    file, images_dir, labels_dir, model, run_title, confi, iou
-):
+def process_labels_file(file, images_dir, labels_dir, model, run_title, confi, iou):
     origin_image = os.path.join(images_dir, file.replace(".txt", ".jpg"))
     out_path = origin_image.replace(".jpg", ".txt")
 
     crops = read_ann_file(os.path.join(labels_dir, file))
+    project_dir = os.path.join(images_dir, run_title, 'crops')  # Project path using run_title
 
     if os.path.exists(out_path):
         logger.debug(f"Skipping {out_path} as it already exists")
+        return
+
+    if not os.path.exists(project_dir):
+        os.makedirs(project_dir)
         return
 
     crops_np = []
@@ -86,7 +87,7 @@ def process_labels_file(
         device=[1],
         save_crop=False,
         save_txt=True,
-        project=f"{run_title}\\crops",
+        project=project_dir,
         name=run_title,
     )
 
@@ -135,9 +136,7 @@ def main(images_dir, labels_dir, model_path):
 
     label_files = os.listdir(labels_dir)
     for n, file in enumerate(label_files):
-        process_labels_file(
-            file, images_dir, labels_dir, model, run_title, confi, iou
-        )
+        process_labels_file(file, images_dir, labels_dir, model, run_title, confi, iou)
         logger.info(f"Processed {n+1}/{len(label_files)} labels files")
 
     end = datetime.datetime.now()
@@ -146,9 +145,7 @@ def main(images_dir, labels_dir, model_path):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="YOLO object detection script"
-    )
+    parser = argparse.ArgumentParser(description="YOLO object detection script")
     parser.add_argument(
         "--images_dir",
         type=str,
