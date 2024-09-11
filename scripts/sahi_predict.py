@@ -16,7 +16,7 @@ def main(
 ):
     start = datetime.datetime.now()
 
-    detection_model = AutoDetectionModel.from_pretrained(
+    AutoDetectionModel.from_pretrained(
         model_type="yolov8",
         model_path=model_path,
         confidence_threshold=0.5,
@@ -24,7 +24,7 @@ def main(
     )
 
     # batch predict
-    result = predict(
+    predict(
         model_type="yolov8",
         model_path=model_path,
         model_device=device,
