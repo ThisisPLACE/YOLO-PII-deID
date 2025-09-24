@@ -1,9 +1,5 @@
 # this code runs two layers of yolo. 1: yolov8l and 2:custom built yolov8 pt for faces and numplates
 #and exports annotaiton files
-# 1.1 takes a list of labels from yolov8x detections and inference on my_model to stitch each image solely
-# 1.2 remove nseg - list segmenter 
-# 1.3 ditch the listing and go for each image solo, update imgtxt to space separater
-# 1.4 if yolo results are empty 
 
 from ultralytics import YOLO
 from logging import log
