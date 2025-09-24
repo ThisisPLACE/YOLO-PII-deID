@@ -1,179 +1,104 @@
-import argparse
-import logging
+# this code runs two layers of yolo. 1: yolov8l and 2:custom built yolov8 pt for faces and numplates
+#and exports annotaiton files
+# 1.1 takes a list of labels from yolov8x detections and inference on my_model to stitch each image solely
+# 1.2 remove nseg - list segmenter 
+# 1.3 ditch the listing and go for each image solo, update imgtxt to space separater
+# 1.4 if yolo results are empty 
+
 from ultralytics import YOLO
-import os
-import csv
-import cv2
-import datetime
+from logging import log
+import os,csv, cv2,datetime
+from math import ceil
+from scripts import list_segmenter
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-
-
-# Helper functions
+# funcions
 def read_ann_file(file_path):
-    data = []
-    with open(file_path, "r") as file:
+    #this functions reads the annotatio file and returns a list with each line as a tuple
+    list = []
+    with open(file_path, 'r') as file:
         for line in file:
             x = line.strip().split()  # split the line into a list
-            data.append(x)
-    return data
+            list.append(x)
+    return list
 
-
-def cv2_np_list(box, img_path):
+def cv2_np_list (box, img_path):
+    #crop and return as numpy array
     img = cv2.imread(img_path)
-    y0, x0, _ = img.shape
-    x = int(float(box[1]) * x0)
-    y = int(float(box[2]) * y0)
-    w = int(float(box[3]) / 2 * x0)
-    h = int(float(box[4]) / 2 * y0)
-    crop = img[y - h : y + h, x - w : x + w]
-    return crop, y0, x0
+    y0,x0,c = img.shape
+    x = int(float(box[1])*x0)
+    y = int(float(box[2])*y0)
+    w = int(float(box[3])/2*x0)
+    h = int(float(box[4])/2*y0)
+    crop = img[y-h:y+h,x-w:x+w]
+    return crop,y0,x0
 
+def csv_write (path,boxes):
+    # write final bboxes as csv file
+    csv_f = open (path, 'w',newline='')
+    writer = csv.writer(csv_f, delimiter=" ")
+    for k,box in enumerate(boxes):
+        writer.writerow(['0',box[0],box[1],box[2],box[3]])
 
-def csv_write(path, boxes):
-    with open(path, "w", newline="") as csv_f:
-        writer = csv.writer(csv_f, delimiter=" ")
-        for k, box in enumerate(boxes):
-            writer.writerow(["0", box[0], box[1], box[2], box[3]])
+start = datetime.datetime.now()
+print(start.strftime('%H:%M:%S'))
+current_run = str(start.strftime('%H:%M:%S')).replace(":","")
 
+#source paths
+src_images = r"D:\PLACE - Zotac\Nigeria\Abuja Ground\Mosaic\Stitched-Mosaic\reel_0022_20250322-084221\filtered"
+src_labels = r"D:\PLACE - Zotac\Nigeria\Abuja Ground\Mosaic\Yolo\Detect\Abuja_Mosaic_reel_084221\labels"
 
-def generate_unique_run_title(images_dir):
-    dir_name = os.path.basename(images_dir)
-    base_run_title = f"run_{dir_name}"
-    suffix_num = 1
-    while os.path.exists(
-        os.path.join(os.path.dirname(images_dir), f"{base_run_title}_{suffix_num}")
-    ):
-        suffix_num += 1
-    unique_run_title = f"{base_run_title}_{suffix_num}"
-    return unique_run_title
+my_model = YOLO(r"D:\PLACE - Zotac\YOLO_jun2024\pt_models\yolov8s_may24_best.pt")
 
+#project = "H:\\YOLO Training\\run"
+run_title = 'Abuja_Mosaic_reel_084221'
+project = r"D:\PLACE - Zotac\Nigeria\Abuja Ground\Mosaic\Yolo\Squired"
 
-def process_labels_file(file, images_dir, labels_dir, model, run_title, confi, iou):
-    origin_image = os.path.join(images_dir, file.replace(".txt", ".jpg"))
-    out_path = origin_image.replace(".jpg", ".txt")
+#Model Parameters
+confi = 0.01   # Confidence threshold
+iou = 0.05      # Intersection Over Union threshold
 
-    crops = read_ann_file(os.path.join(labels_dir, file))
-    project_dir = os.path.join(images_dir, run_title, 'crops')  # Project path using run_title
+#feed each image solo
+for n,file in enumerate(os.listdir(src_labels)):
+    origin_image = os.path.join(src_images,file.replace('.txt','.jpg'))
+    out_path = origin_image.replace('.jpg','.txt')
 
-    if os.path.exists(out_path):
-        logger.debug(f"Skipping {out_path} as it already exists")
-        return
+    crops = read_ann_file(os.path.join(src_labels,file))
 
-    if not os.path.exists(project_dir):
-        os.makedirs(project_dir)
-        return
+    if os.path.exists(out_path)==True:
+        continue
 
-    crops_np = []
+    crops_np =[]
     for crop in crops:
-        if crop[0] in ["0", "2", "3", "5", "7"]:
-            crop_np, imgw, imgh = cv2_np_list(crop, origin_image)
+        if crop[0] in ['0','2','3','5','7']:
+            crop_np,imgw,imgh =cv2_np_list(crop,origin_image)
             crops_np.append(crop_np)
     if len(crops_np) == 0:
-        logger.warning(f"No valid crops found in {file}")
-        return
-
-    results = model.predict(
-        source=crops_np,
-        save=True,
-        imgsz=640,
-        iou=iou,
-        conf=confi,
-        stream=True,
-        device=[1],
-        save_crop=False,
-        save_txt=True,
-        project=project_dir,
-        name=run_title,
-    )
-
-    xbboxs = []
-    for n, result in enumerate(results):
-        for c, box in enumerate(result.boxes):
+        continue
+    #detect on crops
+    results = my_model.predict(source=crops_np,
+                            save=True,imgsz=640,iou=iou,conf=confi, stream=True,device=[0],
+                            save_crop=False, save_txt=True,
+                            project=f'{project}\\{current_run}_crops',
+                            name=run_title
+                            )
+    
+    #prep results lists for writing
+    xbboxs,classes = [],[]
+    for n,result in enumerate(results):
+        for c,box in enumerate(result.boxes):
             detect_box = box.xywhn.tolist()[0]
             float_list = [float(i) for i in crops[n][1:5]]
-            x1, y1, w1, h1 = (
-                float_list[0],
-                float_list[1],
-                float_list[2],
-                float_list[3],
-            )
-            x2, y2, w2, h2 = (
-                detect_box[0],
-                detect_box[1],
-                detect_box[2],
-                detect_box[3],
-            )
-            xbboxs.append(
-                [
-                    ((x2 * w1) + (x1 - w1 / 2)),
-                    ((y2 * h1) + (y1 - h1 / 2)),
-                    (w1 * w2),
-                    (h1 * h2),
-                ]
-            )
+            x1,y1,w1,h1 = float_list[0],float_list[1],float_list[2],float_list[3]
+            x2,y2,w2,h2 = detect_box[0],detect_box[1],detect_box[2],detect_box[3]
+            xbboxs.append([((x2*w1)+(x1-w1/2)),((y2*h1)+(y1-h1/2)),(w1*w2),(h1*h2)])
+            #clas = box.cls.tolist()[0]
+            #classes.append(str(box.cls.tolist()[c]))
 
-    logger.info(f"Processed {file}")
+            #xbboxs.append(list(map(lambda x, y: x * y, detect_box, float_list)))
+    # print (xbboxs)
+    print (f'{n}/{len(os.listdir(src_labels))}',end='\r')
+    csv_write(out_path,xbboxs)
 
-    csv_write(out_path, xbboxs)
-
-
-def main(images_dir, labels_dir, model_path):
-    model = YOLO(model_path)
-
-    start = datetime.datetime.now()
-    logger.info(f"Started processing at {start.strftime('%H:%M:%S')}")
-
-    run_title = generate_unique_run_title(images_dir)
-    logger.info(f"Generated unique run_title: {run_title}")
-
-    confi = 0.01  # Confidence threshold
-    iou = 0.05  # Intersection Over Union threshold
-
-    label_files = os.listdir(labels_dir)
-    for n, file in enumerate(label_files):
-        process_labels_file(file, images_dir, labels_dir, model, run_title, confi, iou)
-        logger.info(f"Processed {n+1}/{len(label_files)} labels files")
-
-    end = datetime.datetime.now()
-    logger.info(f"Finished processing at {end.strftime('%H:%M:%S')}")
-    logger.info(f"Inference duration: {str(end - start)}")
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="YOLO object detection script")
-    parser.add_argument(
-        "--images_dir",
-        type=str,
-        required=True,
-        help="Path to the source images",
-    )
-    parser.add_argument(
-        "--labels_dir",
-        type=str,
-        required=True,
-        help="Path to the source labels",
-    )
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    default_model_path = os.path.join(script_dir, "model.pt")
-    parser.add_argument(
-        "--model",
-        type=str,
-        default=default_model_path,
-        help=f"Path to the custom YOLO model (default: model.pt in {script_dir})",
-    )
-
-    args = parser.parse_args()
-
-    # Setup logging for console output
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
-
-    main(args.images_dir, args.labels_dir, args.model)
+end = datetime.datetime.now()
+print (end)
+print ('inference duration= ',str(end-start))
