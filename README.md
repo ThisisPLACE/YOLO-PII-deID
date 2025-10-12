@@ -1,4 +1,4 @@
-# YOLO and Sahi Helper Scripts
+# Documentation for detection and blurring faces and nu,ber plates using YOLO
 
 This project contains multiple Python scripts for processing images using the YOLOv8 model. Each script has a specific purpose, ranging from memory-efficient list segmentation to advanced object detection and batch inference. Below is a detailed description of each script and its usage.
 
