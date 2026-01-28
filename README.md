@@ -31,7 +31,7 @@ During execution, the script creates a run directory in the current execution di
     Labels associated with detections.
     Cropped images of detected objects.
 
-- #### `yolo_squired.py`
+- #### `yolo_squared.py`
     `python scripts/yolo_squired.py --images_dir /path/to/images --labels_dir /path/to/labels`
 
 This script processes label files (*.txt) in a specified directory (labels_dir), performs object detection using a custom YOLO model, and saves the results in a format suitable for further analysis or processing.
