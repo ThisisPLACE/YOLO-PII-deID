@@ -1,5 +1,15 @@
+# Core runtime dependencies
+# NOTE: For CUDA-enabled PyTorch installs, use the PyTorch install selector
+# (https://pytorch.org/get-started/locally/) to install the correct wheel
+torch
+torchvision
 ultralytics==8.2.48
 opencv-python==4.8.1.78
+Pillow>=9.0.0
 sahi==0.11.16
+pyyaml>=6.0
+numpy>=1.24
+
+# Development / linting
 flake8==7.1.0
 black==24.4.2

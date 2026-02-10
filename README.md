@@ -1,54 +1,78 @@
-# Documentation for detection and blurring faces and number plates using YOLO
+# YOLO Detection & Utilities
 
-This project contains multiple Python scripts for processing images using the YOLOv8 model. Each script has a specific purpose, ranging from memory-efficient list segmentation to advanced object detection and batch inference. Below is a detailed description of each script and its usage.
+Lightweight repository of scripts and utilities for YOLO-based object detection, SAHI slicing, dataset creation, visualization, and Label Studio integration.
+
+## What's changed
+
+- `requirements.txt` now includes `torch` and `torchvision`. For CUDA-enabled installs, please use the official PyTorch selector to install the correct wheel for your GPU.
+- A configuration template is available at `scripts/Sahi_detect/config_template.yaml` (copy and edit to create your runtime `config.yaml`).
 
 ## Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/WaddahHago/YOLO-PII-deID.git
-   cd YOLO-PII-deID/
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
+1. Create and activate a Python virtual environment:
 
-## Pre-trained Models
+```bash
+python3 -m venv yolo_env
+# Linux / macOS
+source yolo_env/bin/activate
+# Windows (PowerShell)
+.\yolo_env\Scripts\Activate.ps1
+```
 
+2. Install PyTorch (choose proper wheel for your CUDA version). Example for CUDA via PyTorch's index (adjust to your CUDA):
 
-## Usage
+```bash
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu130
+```
 
-- #### `yolo_detect.py`
-    `python scripts/yolo_detect.py --source /path/to/images --model /path/to/model.pt`
-  
-This script performs object detection using YOLOv8 on images located in a specified source directory. It accepts two optional arguments:
+3. Install remaining dependencies:
 
-    --source: Specifies the directory containing images to be processed. Default is "images" in the script's directory.
-    --model: Specifies the path to the YOLOv8 model file. Default is "model.pt" in the script's directory.
+```bash
+pip install -r requirements.txt
+```
 
-During execution, the script creates a run directory in the current execution directory where it saves:
+Note: `requirements.txt` includes `torch`/`torchvision` as convenience, but installing PyTorch through the official selector ensures compatibility with your CUDA runtime.
 
-    Detected objects.
-    Labels associated with detections.
-    Cropped images of detected objects.
+## Quick Start
 
-- #### `yolo_squared.py`
-    `python scripts/yolo_squired.py --images_dir /path/to/images --labels_dir /path/to/labels`
+- Run a simple detection (example):
 
-This script processes label files (*.txt) in a specified directory (labels_dir), performs object detection using a custom YOLO model, and saves the results in a format suitable for further analysis or processing.
+```bash
+python yolo_detect_v11.py --input path/to/image.jpg --conf 0.5
+```
 
-    --images_dir: Path to the directory containing source images.
-    --labels_dir: Path to the directory containing label files (.txt).
-    --model: Path to the custom YOLO model file. Default is "model.pt" in the script's directory.
+- Run SAHI detection (example):
 
-During execution, the script processes each label file in labels_dir, performs object detection using the specified YOLO model, and saves the detection results for each image.
-- #### `blur_code.py`
-    `python scripts/sahi_test.py --source /path/to/directory`
+```bash
+python scripts/Sahi_detect/sahi_detection.py --config scripts/Sahi_detect/config_template.yaml
+```
 
+## Configuration
 
-# Contributing
+Use `scripts/Sahi_detect/config_template.yaml` as a starting point. Copy it to `scripts/Sahi_detect/config.yaml` and update the `input_dir`, `output_dir`, and `model.path` values to point to your dataset and model weights.
 
-Feel free to fork this project, make improvements, and submit pull requests. For major changes, please open an issue first to discuss what you would like to change.
+## Files of Interest
 
-# License
+- `yolo_detect_v11.py` — YOLO v11 inference script
+- `scripts/train/yolo11_train.py` — Training script
+- `scripts/Sahi_detect/` — SAHI detection scripts and configs
+- `utils/` — utilities for staging images, visualization, dataset creation, Label Studio helpers
+- `requirements.txt` — project dependencies
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## Troubleshooting
+
+- Verify GPU drivers and CUDA with `nvidia-smi` and test PyTorch with:
+
+```bash
+python -c "import torch; print('GPU Found!' if torch.cuda.is_available() else 'CPU Only')"
+```
+
+- If Pillow raises errors, see `scripts/Sahi_detect/INSTALL_PILLOW.md`.
+
+## Contributing
+
+Contributions welcome — open an issue or submit a PR.
+
+---
+
+**Last Updated:** February 2026
