@@ -1,0 +1,15 @@
+{
+  "description": "Process only 'stitched' directories without visualization",
+  "input_dir": "D:\\PLACE - Zotac\\BGD\\Testing",
+  "output_file": "D:\\PLACE - Zotac\\BGD\\Testing\\output\\detections_stitched.txt",
+  "face_model": "D:\\PLACE - Zotac\\YOLO_DEC2025\\YOLO Train\\24JAN2026\\runs\\face1_oiv\\weights\\best.pt",
+  "plate_model": "D:\\path\\to\\your\\plate_model\\best.pt",
+  "device": "cuda:0",
+  "slice_height": 1280,
+  "slice_width": 1280,
+  "overlap_ratio": 0.2,
+  "visualize": 0,
+  "visualization_dir": null,
+  "resume": true,
+  "dir_filter": "stitched"
+}
