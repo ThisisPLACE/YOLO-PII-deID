@@ -1,0 +1,68 @@
+# YOLO Training outputs
+runs/
+results/
+
+# Exception: Keep pre-trained weights if small
+weights/yolo11m.pt
+weights/yolo11s.pt
+weights/yolo11l.pt
+weights\yolov8m-oiv7.pt
+weights\yolov8s-oiv7.pt
+
+# Datasets - Images and Videos
+data/images/
+data/videos/
+datasets/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.mp4
+*.avi
+*.mov
+# Exception: Keep example/sample images
+!example*.jpg
+!sample*.png
+!assets/*.jpg
+
+# Large data files
+*.zip
+*.tar
+*.tar.gz
+*.h5
+*.hdf5
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# Environment variables
+.env
+.env.local
+secrets.yaml
+
+# Temporary files
+temp/
+tmp/
+*.tmp

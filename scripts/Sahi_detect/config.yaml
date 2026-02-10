@@ -1,0 +1,72 @@
+# SAHI Detection Configuration File
+# ===================================
+
+# Directory Configuration
+directories:
+  input_dir: "D:\\PLACE - Zotac\\BGD\\Testing\\Testing Collection Stitched"
+  output_dir: "D:\\PLACE - Zotac\\BGD\\Testing\\test_detect"
+  logs_dir: "./logs"
+
+# Model Configuration
+model:
+  type: "yolo11"  # Options: 'yolov8', 'yolov5', 'detectron2', etc.
+  path: "D:\\PLACE - Zotac\\YOLO_DEC2025\\YOLO Train\\BGD_28JAN2026\\trained_pt\\train_26s_164epoch\\weights\\best.pt"
+  device: "cuda:0"  # Options: 'cuda:0', 'cuda:1', 'cpu', 'mps' (for Apple Silicon)
+  confidence_threshold: 0.25  # Detection confidence threshold (0-1)
+
+# Slicing Configuration (SAHI parameters)
+slicing:
+  enabled: true
+  slice_height: 640  # Height of each slice in pixels
+  slice_width: 640   # Width of each slice in pixels
+  overlap_height_ratio: 0.2  # Vertical overlap ratio (0.2 = 20%)
+  overlap_width_ratio: 0.2   # Horizontal overlap ratio (0.2 = 20%)
+  perform_standard_pred: false  # Whether to also perform standard (non-sliced) prediction
+
+# Image Processing Configuration
+image_processing:
+  supported_formats:
+    - ".jpg"
+    - ".jpeg"
+    - ".png"
+    - ".bmp"
+    - ".tiff"
+    - ".webp"
+  case_insensitive: true  # Search for both lowercase and uppercase extensions
+  recursive_search: true  # Search through subdirectories
+  max_images: null  # Maximum number of images to process (null = no limit)
+
+# Output Configuration
+output:
+  export_visuals: true  # Export annotated images with bounding boxes
+  visual_format: "jpg"  # Format for exported images: 'png' or 'jpg'
+  jpg_quality: 40  # JPG quality (1-100, higher = better quality, larger file)
+  preserve_folder_structure: true  # Maintain input folder hierarchy in output
+  export_results_json: false  # Export detection results as JSON
+  export_results_csv: false  # Export detection results as CSV
+  export_results_yolo: true  # Export detection results in YOLO format (.txt)
+  yolo_format: "normalized"  # Options: 'normalized' (0-1) or 'pixel' (pixel coordinates)
+
+# Logging Configuration
+logging:
+  level: "INFO"  # Options: 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  log_to_file: true
+  log_file: "./logs/sahi_detection.log"
+  console_output: true
+
+# Processing Configuration
+processing:
+  batch_mode: false  # Process multiple images in parallel
+  num_workers: 4  # Number of parallel workers (if batch_mode is true)
+  verbose: true  # Print detailed progress information
+  skip_existing: false  # Skip images that already have results
+
+# Advanced Configuration
+advanced:
+  post_processing:
+    nms_threshold: 0.5  # Non-Maximum Suppression threshold
+    min_area: 0  # Minimum area of detections to keep (pixels squared)
+  memory:
+    clear_cache: true  # Clear GPU cache between images
+    optimize_memory: true  # Use memory optimization techniques

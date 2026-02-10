@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  labelstudio:
+    image: heartexlabs/label-studio:latest
+    container_name: label-studio
+    ports:
+      - "8080:8080"
+    environment:
+      - LABEL_STUDIO_LOCAL_FILES_SERVING_ENABLED=true
+      - LABEL_STUDIO_LOCAL_FILES_DOCUMENT_ROOT=/label-studio/files
+    volumes:
+      - label_studio_data:/label-studio/data
+      - ./yolo_dataset:/label-studio/files
+    restart: unless-stopped
+
+volumes:
+  label_studio_data:
