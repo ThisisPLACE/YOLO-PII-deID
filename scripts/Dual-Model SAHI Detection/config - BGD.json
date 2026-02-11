@@ -1,15 +1,15 @@
 {
   "description": "Default configuration for dual-model SAHI detection",
-  "input_dir": "D:\\PLACE - Zotac\\BGD\\Testing\\Testing Collection Stitched",
-  "output_file": "D:\\PLACE - Zotac\\BGD\\Testing\\output\\detections_master.txt",
-  "face_model": "D:\\PLACE - Zotac\\YOLO_DEC2025\\YOLO Train\\24JAN2026\\runs\\face1_oiv\\weights\\best.pt",
-  "plate_model": "D:\\path\\to\\your\\plate_model\\best.pt",
-  "device": "cuda:0",
+  "input_dir": "E:\\PLACE - Zotac\\BGD\\Testing\\Testing Collection stitched Staged 300",
+  "output_file": "E:\\PLACE - Zotac\\BGD\\Testing\\Testing Collection stitched Staged 300\\detections_master.txt",
+  "face_model": "weights/BGD_train_26s_191epoch-face_01022026/weights/best.pt",
+  "plate_model": "weights/BGD_train_26s_100epoch-plate_01022026/weights/best.pt",
+  "device": "cpu",
   "slice_height": 1280,
   "slice_width": 1280,
   "overlap_ratio": 0.2,
-  "visualize": 0,
-  "visualization_dir": null,
+  "visualize": 100,
+  "visualization_dir": "E:\\PLACE - Zotac\\BGD\\Testing\\Testing Collection stitched Staged 300\\viz",
   "resume": true,
   "dir_filter": null
 }

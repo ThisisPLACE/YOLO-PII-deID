@@ -1,0 +1,35 @@
+(yolo) C:\Users\RDPUser\Desktop\PLACEPC-PROC\scripts\YOLO-PII-deID\scripts>python "Dual-Model SAHI Detection\analyze_detections.py" --input-file "C:\Users\RDPUser\Desktop\PLACEPC-PROC\BGD\testing_set_300\detections_master.txt"
+Loading detections from: C:\Users\RDPUser\Desktop\PLACEPC-PROC\BGD\testing_set_300\detections_master.txt
+Traceback (most recent call last):
+  File "C:\Users\RDPUser\Desktop\PLACEPC-PROC\scripts\YOLO-PII-deID\scripts\Dual-Model SAHI Detection\analyze_detections.py", line 311, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\RDPUser\Desktop\PLACEPC-PROC\scripts\YOLO-PII-deID\scripts\Dual-Model SAHI Detection\analyze_detections.py", line 293, in main
+    df = load_detections(args.input_file)
+  File "C:\Users\RDPUser\Desktop\PLACEPC-PROC\scripts\YOLO-PII-deID\scripts\Dual-Model SAHI Detection\analyze_detections.py", line 15, in load_detections
+    df = pd.read_csv(
+        file_path,
+    ...<2 lines>...
+        names=['image_path', 'class_id', 'x_center', 'y_center', 'width', 'height', 'confidence']
+    )
+  File "C:\Users\RDPUser\miniconda3\envs\yolo\Lib\site-packages\pandas\io\parsers\readers.py", line 873, in read_csv
+    return _read(filepath_or_buffer, kwds)
+  File "C:\Users\RDPUser\miniconda3\envs\yolo\Lib\site-packages\pandas\io\parsers\readers.py", line 306, in _read
+    return parser.read(nrows)
+           ~~~~~~~~~~~^^^^^^^
+  File "C:\Users\RDPUser\miniconda3\envs\yolo\Lib\site-packages\pandas\io\parsers\readers.py", line 1947, in read
+    ) = self._engine.read(  # type: ignore[attr-defined]
+        ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        nrows
+        ^^^^^
+    )
+    ^
+  File "C:\Users\RDPUser\miniconda3\envs\yolo\Lib\site-packages\pandas\io\parsers\c_parser_wrapper.py", line 215, in read
+    chunks = self._reader.read_low_memory(nrows)
+  File "pandas/_libs/parsers.pyx", line 832, in pandas._libs.parsers.TextReader.read_low_memory
+  File "pandas/_libs/parsers.pyx", line 897, in pandas._libs.parsers.TextReader._read_rows
+  File "pandas/_libs/parsers.pyx", line 868, in pandas._libs.parsers.TextReader._tokenize_rows
+  File "pandas/_libs/parsers.pyx", line 885, in pandas._libs.parsers.TextReader._check_tokenize_status
+  File "pandas/_libs/parsers.pyx", line 2084, in pandas._libs.parsers.raise_parser_error
+pandas.errors.ParserError: Error tokenizing data. C error: Expected 10 fields in line 48, saw 14
+

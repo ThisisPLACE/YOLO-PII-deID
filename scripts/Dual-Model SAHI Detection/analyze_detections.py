@@ -9,17 +9,23 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
 def load_detections(file_path: str) -> pd.DataFrame:
-    """Load detection file into pandas DataFrame."""
-    df = pd.read_csv(
-        file_path,
-        sep=' ',
-        comment='#',
-        names=['image_path', 'class_id', 'x_center', 'y_center', 'width', 'height', 'confidence']
-    )
-    return df
-
+    """Load detection file into pandas DataFrame handling spaces in paths."""
+    try:
+        # Use r'\s+' as a separator to catch one or more spaces/tabs
+        # Use engine='python' to handle complex separators more gracefully
+        df = pd.read_csv(
+            file_path,
+            sep=r'\s+',
+            engine='python',
+            comment='#',
+            names=['image_path', 'class_id', 'x_center', 'y_center', 'width', 'height', 'confidence'],
+            on_bad_lines='warn' # This will skip lines that still fail and show a warning
+        )
+        return df
+    except Exception as e:
+        print(f"Error loading CSV: {e}")
+        raise
 
 def analyze_detections(df: pd.DataFrame, output_dir: str = None):
     """
