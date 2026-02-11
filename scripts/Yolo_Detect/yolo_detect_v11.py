@@ -21,7 +21,7 @@ DETECTION_PARAMS = {
     'iou': 0.1,
     'verbose': True,
     'save_crop': True,
-    'classes':[0,1,2,3,5,7]  # Example: only detect persons,bicycle, cars,motorcycle, buses, truck
+    'classes':[0,1,2,3,5,7]  # Example: only detect persons,bicycle, cars, motorcycle, buses, truck
 }
 
 # Find all images recursively in directories containing "stitched"
