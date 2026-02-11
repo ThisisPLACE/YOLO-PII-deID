@@ -13,7 +13,7 @@ def visualize_detections(input_file, output_dir, quality=50):
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # Load detections using the space-separated format
+    # Load detections using the space-separated formats
     # Using a regex separator to handle potential extra spaces in file paths
     try:
         df = pd.read_csv(
