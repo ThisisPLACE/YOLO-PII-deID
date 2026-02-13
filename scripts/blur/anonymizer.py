@@ -11,7 +11,6 @@ import csv
 from pathlib import Path
 from datetime import datetime
 import piexif
-import multiprocessing
 
 
 # Global log storage
@@ -85,13 +84,16 @@ def process_detections_csv(csv_path, parent_dir, output_dir):
             reader = csv.DictReader(f)
             for row in reader:
                 img_path = row['image_path'].replace('\\', os.sep).lstrip(os.sep)
+                
                 # Construct full path
                 if parent_dir:
                     full_img_path = os.path.join(parent_dir, img_path)
                 else:
                     full_img_path = img_path
+                
                 if full_img_path not in detections_by_image:
                     detections_by_image[full_img_path] = []
+                
                 detections_by_image[full_img_path].append({
                     'class_id': int(row['class_id']),
                     'x': float(row['x_center']),
@@ -99,36 +101,75 @@ def process_detections_csv(csv_path, parent_dir, output_dir):
                     'w': float(row['width']),
                     'h': float(row['height'])
                 })
-
-                    with multiprocessing.Pool(cpu_count) as pool:
-                        results = []
-                        for i, result in enumerate(pool.imap_unordered(process_image_worker, image_args), 1):
-                            percent = i / total_images
-                            bar_length = 40
-                            filled_length = int(bar_length * percent)
-                            bar = '█' * filled_length + '-' * (bar_length - filled_length)
-                            progress_msg = f"[{bar}] {int(percent*100)}% ({i}/{total_images})"
-                            print(progress_msg, end='\r')
-                            results.append(result)
-                        print()
-
-                    # Collect results
-                    processed_count = 0
-                    failed_images = []
-                    warning_list = []
-                    detection_count = 0
-                    for result in results:
-                        detection_count += result['blur_count']
-                        if result['status'] == 'processed':
-                            processed_count += 1
-                            log_message(f"✓ Processed: {result['img_path']} ({result['blur_count']} regions blurred)")
-                        elif result['status'] == 'skipped':
-                            log_message(f"⏩ Skipped (already processed): {result['img_path']}")
-                        else:
-                            failed_images.append(result['img_path'])
-                            for w in result['warnings']:
-                                warning_list.append(w)
-                                log_message(f"⚠ {w}")
+                detection_count += 1
+    
+    except Exception as e:
+        log_message(f"ERROR: Could not read CSV file - {e}")
+        return
+    
+    log_message(f"Processing {len(detections_by_image)} images with {detection_count} detections...\n")
+    
+    # Process each image
+    for full_img_path, detections in detections_by_image.items():
+        # Check if file exists
+        if not os.path.exists(full_img_path):
+            msg = f"Image not found: {full_img_path}"
+            warning_list.append(msg)
+            log_message(f"⚠ {msg}")
+            failed_images.append(full_img_path)
+            continue
+        
+        try:
+            # Load image
+            img = cv2.imread(full_img_path)
+            if img is None:
+                msg = f"Could not load image: {full_img_path}"
+                warning_list.append(msg)
+                log_message(f"⚠ {msg}")
+                failed_images.append(full_img_path)
+                continue
+            
+            # Apply all detections to this image
+            blur_count = 0
+            for detection in detections:
+                img, success = blur_region(
+                    img, 
+                    detection['x'], 
+                    detection['y'], 
+                    detection['w'], 
+                    detection['h'],
+                    full_img_path
+                )
+                if success:
+                    blur_count += 1
+            
+            # Create output directory structure
+            if parent_dir:
+                rel_path = os.path.relpath(full_img_path, parent_dir)
+            else:
+                rel_path = os.path.basename(full_img_path)
+            
+            output_path = os.path.join(output_dir, rel_path)
+            output_subdir = os.path.dirname(output_path)
+            
+            os.makedirs(output_subdir, exist_ok=True)
+            
+            # Save blurred image
+            cv2.imwrite(output_path, img)
+            
+            # Try to preserve EXIF
+            exif_inject(full_img_path, output_path)
+            
+            processed_count += 1
+            log_message(f"✓ Processed: {full_img_path} ({blur_count}/{len(detections)} regions blurred)")
+        
+        except Exception as e:
+            msg = f"Error processing {full_img_path}: {e}"
+            warning_list.append(msg)
+            log_message(f"✗ {msg}")
+            failed_images.append(full_img_path)
+    
+    # Summary report
     log_message("\n" + "="*70)
     log_message("PROCESSING SUMMARY")
     log_message("="*70)
