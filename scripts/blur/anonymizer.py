@@ -85,78 +85,20 @@ def process_detections_csv(csv_path, parent_dir, output_dir):
             reader = csv.DictReader(f)
             for row in reader:
                 img_path = row['image_path'].replace('\\', os.sep).lstrip(os.sep)
-                
                 # Construct full path
                 if parent_dir:
                     full_img_path = os.path.join(parent_dir, img_path)
                 else:
                     full_img_path = img_path
-                
                 if full_img_path not in detections_by_image:
                     detections_by_image[full_img_path] = []
-                
                 detections_by_image[full_img_path].append({
                     'class_id': int(row['class_id']),
-                    # Multiprocessing worker
-                    def process_image_worker(args):
-                        full_img_path, detections, parent_dir, output_dir = args
-                        result = {'img_path': full_img_path, 'status': '', 'blur_count': 0, 'warnings': []}
-                        # Create output directory structure
-                        if parent_dir:
-                            rel_path = os.path.relpath(full_img_path, parent_dir)
-                        else:
-                            rel_path = os.path.basename(full_img_path)
-                        output_path = os.path.join(output_dir, rel_path)
-                        output_subdir = os.path.dirname(output_path)
-                        os.makedirs(output_subdir, exist_ok=True)
-
-                        # Skip if output file already exists
-                        if os.path.exists(output_path):
-                            result['status'] = 'skipped'
-                            return result
-
-                        if not os.path.exists(full_img_path):
-                            result['status'] = 'not_found'
-                            result['warnings'].append(f"Image not found: {full_img_path}")
-                            return result
-
-                        try:
-                            img = cv2.imread(full_img_path)
-                            if img is None:
-                                result['status'] = 'load_fail'
-                                result['warnings'].append(f"Could not load image: {full_img_path}")
-                                return result
-                            blur_count = 0
-                            for detection in detections:
-                                img, success = blur_region(
-                                    img,
-                                    detection['x'],
-                                    detection['y'],
-                                    detection['w'],
-                                    detection['h'],
-                                    full_img_path
-                                )
-                                if success:
-                                    blur_count += 1
-                            cv2.imwrite(output_path, img)
-                            exif_inject(full_img_path, output_path)
-                            result['status'] = 'processed'
-                            result['blur_count'] = blur_count
-                        except Exception as e:
-                            result['status'] = 'error'
-                            result['warnings'].append(f"Error processing {full_img_path}: {e}")
-                        return result
-
-                    # Prepare arguments for multiprocessing
-                    image_args = [
-                        (full_img_path, detections, parent_dir, output_dir)
-                        for full_img_path, detections in detections_by_image.items()
-                    ]
-                    total_images = len(image_args)
-
-                    # Use all available CPU cores
-                    cpu_count = multiprocessing.cpu_count()
-                    log_message(f"Using {cpu_count} CPU cores for parallel processing.")
+                    'x': float(row['x_center']),
+                    'y': float(row['y_center']),
+                    'w': float(row['width']),
+                    'h': float(row['height'])
+                })
 
                     with multiprocessing.Pool(cpu_count) as pool:
                         results = []
