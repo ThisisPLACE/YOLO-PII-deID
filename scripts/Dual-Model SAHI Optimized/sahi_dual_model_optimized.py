@@ -166,6 +166,10 @@ def save_visualization(
         output_dir: Directory to save visualization
     """
     try:
+        # Ensure output_dir is a Path object
+        if isinstance(output_dir, str):
+            output_dir = Path(output_dir)
+        
         # Read image
         image = cv2.imread(str(image_path))
         if image is None:
@@ -309,7 +313,7 @@ def process_single_image(
                 image_path,
                 face_result,
                 plate_result,
-                visualization_dir
+                visualization_dir  # Can be str or Path, function handles both
             )
         
         return DetectionResult(
@@ -561,14 +565,13 @@ def process_images_optimized(
             future_to_image = {}
             for image_path in remaining_images:
                 visualize = image_path in visualize_images
-                vis_dir = Path(visualization_dir) if visualization_dir else None
                 
                 future = executor.submit(
                     process_single_image,
                     image_path,
                     detector,
                     visualize,
-                    vis_dir
+                    visualization_dir  # Pass as-is, function handles conversion
                 )
                 future_to_image[future] = image_path
             
