@@ -1,0 +1,17 @@
+{
+  "description": "Default configuration for dual-model SAHI detection",
+  "input_dir": "C:\\Users\\RDPUser\\Desktop\\PLACEPC-PROC\\BGD\\NewCollection_Staged\\DEC",
+  "output_file": "C:\\Users\\RDPUser\\Desktop\\PLACEPC-PROC\\BGD\\SahiDetections\\NewDec_detection.txt",
+  "face_model": "C:\\Users\\RDPUser\\Desktop\\PLACEPC-PROC\\scripts\\YOLO-PII-deID\\weights\\BGD_train_26s_191epoch-face_01022026\\weights\\best.pt",
+  "plate_model": "C:\\Users\\RDPUser\\Desktop\\PLACEPC-PROC\\scripts\\YOLO-PII-deID\\weights\\BGD_train_26s_100epoch-plate_01022026\\weights\\best.pt",
+  "devices": ["cuda:0"],
+  "slice_height": 640,
+  "slice_width": 640,
+  "overlap_ratio": 0.2,
+  "visualize": 100,
+  "visualization_dir": "C:\\Users\\RDPUser\\Desktop\\PLACEPC-PROC\\BGD\\SahiDetections\\NewDecVisualizations",
+  "resume": true,
+  "dir_filter": null,
+  "num_workers": 4,
+  "batch_size": 10
+}

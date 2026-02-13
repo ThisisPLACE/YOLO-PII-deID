@@ -376,13 +376,14 @@ def load_processed_images(progress_file: str) -> Set[str]:
     """Load set of already processed images from progress file."""
     if not os.path.exists(progress_file):
         return set()
-    
+
     processed = set()
     with open(progress_file, 'r') as f:
         for line in f:
             if line.strip():
-                processed.add(line.strip())
-    
+                # Normalize paths to ensure consistency
+                processed.add(str(Path(line.strip()).resolve()))
+
     logger.info(f"Loaded {len(processed)} already processed images")
     return processed
 
@@ -390,17 +391,24 @@ def load_processed_images(progress_file: str) -> Set[str]:
 def save_progress(progress_file: str, image_path: str):
     """Thread-safe progress saving."""
     # Use file lock for thread safety
-    lock_file = progress_file + '.lock'
-    import fcntl
+    progress_file = str(progress_file)  # Ensure it's a string, not a Path object
     try:
-        with open(progress_file, 'a') as f:
-            # This works on Unix-like systems; Windows needs different approach
-            try:
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-            except (AttributeError, ImportError):
-                pass  # Skip locking on Windows
-            f.write(f"{image_path}\n")
-            f.flush()
+        try:
+            import fcntl
+            with open(progress_file, 'a') as f:
+                # This works on Unix-like systems; Windows needs different approach
+                try:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                except (AttributeError, ImportError):
+                    pass  # Skip locking on Windows
+                # Normalize path before saving
+                f.write(f"{str(Path(image_path).resolve())}\n")
+                f.flush()
+        except ImportError:
+            # fcntl not available on Windows, just write without locking
+            with open(progress_file, 'a') as f:
+                f.write(f"{str(Path(image_path).resolve())}\n")
+                f.flush()
     except Exception as e:
         logger.warning(f"Failed to save progress: {e}")
 
@@ -608,7 +616,7 @@ def process_images_optimized(
                             )
                         
                         # Save progress
-                        save_progress(progress_file, str(image_path))
+                        save_progress(str(progress_file), str(image_path))
                     
                 except Exception as e:
                     logger.error(f"Error processing {image_path}: {e}")
