@@ -3,14 +3,16 @@
 
 # Directory Configuration
 directories:
-  input_dir: "D:\\PLACE - Zotac\\BGD\\Testing\\Testing Collection Stitched"
-  output_dir: "D:\\PLACE - Zotac\\BGD\\Testing\\test_detect"
+  input_dir: "C:\\Users\\RDPUser\\Desktop\\PLACEPC-PROC\\BGD\\testing_set_300"
+  output_dir: "C:\\Users\\RDPUser\\Desktop\\PLACEPC-PROC\\BGD\\testing_set_300\\viz"
   logs_dir: "./logs"
 
+  #"plate_model": "weights/BGD_train_26s_100epoch-plate_01022026/weights/best.pt",
+  
 # Model Configuration
 model:
   type: "yolo11"  # Options: 'yolov8', 'yolov5', 'detectron2', etc.
-  path: "D:\\PLACE - Zotac\\YOLO_DEC2025\\YOLO Train\\BGD_28JAN2026\\trained_pt\\train_26s_164epoch\\weights\\best.pt"
+  path: "C:\\Users\\RDPUser\\Desktop\\PLACEPC-PROC\\scripts\\YOLO-PII-deID\\weights\\BGD_train_26s_100epoch-plate_01022026\\weights\\best.pt"
   device: "cuda:0"  # Options: 'cuda:0', 'cuda:1', 'cpu', 'mps' (for Apple Silicon)
   confidence_threshold: 0.25  # Detection confidence threshold (0-1)
 
@@ -57,10 +59,10 @@ logging:
 
 # Processing Configuration
 processing:
-  batch_mode: false  # Process multiple images in parallel
+  batch_mode: True  # Process multiple images in parallel
   num_workers: 4  # Number of parallel workers (if batch_mode is true)
   verbose: true  # Print detailed progress information
-  skip_existing: false  # Skip images that already have results
+  skip_existing: True  # Skip images that already have results
 
 # Advanced Configuration
 advanced:
