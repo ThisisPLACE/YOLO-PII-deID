@@ -63,6 +63,7 @@ def blur_region(img, x, y, w, h, img_path):
 def process_detections_csv(csv_path, parent_dir, output_dir):
     """
     Process CSV file and blur all detected regions in images
+    Resumes processing by skipping already processed images in the output directory.
     """
     
     log_message(f"Starting blur processing...")
@@ -90,10 +91,10 @@ def process_detections_csv(csv_path, parent_dir, output_dir):
                     full_img_path = os.path.join(parent_dir, img_path)
                 else:
                     full_img_path = img_path
-                
+
                 if full_img_path not in detections_by_image:
                     detections_by_image[full_img_path] = []
-                
+
                 detections_by_image[full_img_path].append({
                     'class_id': int(row['class_id']),
                     'x': float(row['x_center']),
@@ -102,7 +103,7 @@ def process_detections_csv(csv_path, parent_dir, output_dir):
                     'h': float(row['height'])
                 })
                 detection_count += 1
-    
+
     except Exception as e:
         log_message(f"ERROR: Could not read CSV file - {e}")
         return
@@ -111,6 +112,20 @@ def process_detections_csv(csv_path, parent_dir, output_dir):
     
     # Process each image
     for full_img_path, detections in detections_by_image.items():
+        # Create output path
+        if parent_dir:
+            rel_path = os.path.relpath(full_img_path, parent_dir)
+        else:
+            rel_path = os.path.basename(full_img_path)
+
+        output_path = os.path.join(output_dir, rel_path)
+
+        # Skip if the output image already exists
+        if os.path.exists(output_path):
+            log_message(f"✓ Skipping already processed image: {output_path}")
+            processed_count += 1
+            continue
+
         # Check if file exists
         if not os.path.exists(full_img_path):
             msg = f"Image not found: {full_img_path}"
@@ -118,7 +133,7 @@ def process_detections_csv(csv_path, parent_dir, output_dir):
             log_message(f"⚠ {msg}")
             failed_images.append(full_img_path)
             continue
-        
+
         try:
             # Load image
             img = cv2.imread(full_img_path)
@@ -128,7 +143,7 @@ def process_detections_csv(csv_path, parent_dir, output_dir):
                 log_message(f"⚠ {msg}")
                 failed_images.append(full_img_path)
                 continue
-            
+
             # Apply all detections to this image
             blur_count = 0
             for detection in detections:
@@ -142,33 +157,26 @@ def process_detections_csv(csv_path, parent_dir, output_dir):
                 )
                 if success:
                     blur_count += 1
-            
+
             # Create output directory structure
-            if parent_dir:
-                rel_path = os.path.relpath(full_img_path, parent_dir)
-            else:
-                rel_path = os.path.basename(full_img_path)
-            
-            output_path = os.path.join(output_dir, rel_path)
             output_subdir = os.path.dirname(output_path)
-            
             os.makedirs(output_subdir, exist_ok=True)
-            
+
             # Save blurred image
             cv2.imwrite(output_path, img)
-            
+
             # Try to preserve EXIF
             exif_inject(full_img_path, output_path)
-            
+
             processed_count += 1
             log_message(f"✓ Processed: {full_img_path} ({blur_count}/{len(detections)} regions blurred)")
-        
+
         except Exception as e:
             msg = f"Error processing {full_img_path}: {e}"
             warning_list.append(msg)
             log_message(f"✗ {msg}")
             failed_images.append(full_img_path)
-    
+
     # Summary report
     log_message("\n" + "="*70)
     log_message("PROCESSING SUMMARY")
@@ -176,17 +184,17 @@ def process_detections_csv(csv_path, parent_dir, output_dir):
     log_message(f"✓ Successfully processed: {processed_count} images")
     log_message(f"  Total detections blurred: {detection_count}")
     log_message(f"✗ Failed to process: {len(failed_images)} images")
-    
+
     if warning_list:
         log_message(f"\n⚠ WARNINGS ({len(warning_list)}):")
         for warning in warning_list:
             log_message(f"  - {warning}")
-    
+
     if not parent_dir:
         log_message(f"\n ℹ Note: No parent directory supplied. CSV paths used as-is.")
-    
+
     log_message("="*70)
-    
+
     # Write log file
     os.makedirs(output_dir, exist_ok=True)
     log_file_path = os.path.join(output_dir, "processing_log.txt")
