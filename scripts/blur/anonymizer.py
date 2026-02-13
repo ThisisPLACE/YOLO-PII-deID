@@ -11,6 +11,7 @@ import csv
 from pathlib import Path
 from datetime import datetime
 import piexif
+import multiprocessing
 
 
 # Global log storage
@@ -96,80 +97,96 @@ def process_detections_csv(csv_path, parent_dir, output_dir):
                 
                 detections_by_image[full_img_path].append({
                     'class_id': int(row['class_id']),
-                    'x': float(row['x_center']),
-                    'y': float(row['y_center']),
-                    'w': float(row['width']),
-                    'h': float(row['height'])
-                })
-                detection_count += 1
-    
-    except Exception as e:
-        log_message(f"ERROR: Could not read CSV file - {e}")
-        return
-    
-    log_message(f"Processing {len(detections_by_image)} images with {detection_count} detections...\n")
-    
-    # Process each image
-    for full_img_path, detections in detections_by_image.items():
-        # Check if file exists
-        if not os.path.exists(full_img_path):
-            msg = f"Image not found: {full_img_path}"
-            warning_list.append(msg)
-            log_message(f"⚠ {msg}")
-            failed_images.append(full_img_path)
-            continue
-        
-        try:
-            # Load image
-            img = cv2.imread(full_img_path)
-            if img is None:
-                msg = f"Could not load image: {full_img_path}"
-                warning_list.append(msg)
-                log_message(f"⚠ {msg}")
-                failed_images.append(full_img_path)
-                continue
-            
-            # Apply all detections to this image
-            blur_count = 0
-            for detection in detections:
-                img, success = blur_region(
-                    img, 
-                    detection['x'], 
-                    detection['y'], 
-                    detection['w'], 
-                    detection['h'],
-                    full_img_path
-                )
-                if success:
-                    blur_count += 1
-            
-            # Create output directory structure
-            if parent_dir:
-                rel_path = os.path.relpath(full_img_path, parent_dir)
-            else:
-                rel_path = os.path.basename(full_img_path)
-            
-            output_path = os.path.join(output_dir, rel_path)
-            output_subdir = os.path.dirname(output_path)
-            
-            os.makedirs(output_subdir, exist_ok=True)
-            
-            # Save blurred image
-            cv2.imwrite(output_path, img)
-            
-            # Try to preserve EXIF
-            exif_inject(full_img_path, output_path)
-            
-            processed_count += 1
-            log_message(f"✓ Processed: {full_img_path} ({blur_count}/{len(detections)} regions blurred)")
-        
-        except Exception as e:
-            msg = f"Error processing {full_img_path}: {e}"
-            warning_list.append(msg)
-            log_message(f"✗ {msg}")
-            failed_images.append(full_img_path)
-    
-    # Summary report
+                    # Multiprocessing worker
+                    def process_image_worker(args):
+                        full_img_path, detections, parent_dir, output_dir = args
+                        result = {'img_path': full_img_path, 'status': '', 'blur_count': 0, 'warnings': []}
+                        # Create output directory structure
+                        if parent_dir:
+                            rel_path = os.path.relpath(full_img_path, parent_dir)
+                        else:
+                            rel_path = os.path.basename(full_img_path)
+                        output_path = os.path.join(output_dir, rel_path)
+                        output_subdir = os.path.dirname(output_path)
+                        os.makedirs(output_subdir, exist_ok=True)
+
+                        # Skip if output file already exists
+                        if os.path.exists(output_path):
+                            result['status'] = 'skipped'
+                            return result
+
+                        if not os.path.exists(full_img_path):
+                            result['status'] = 'not_found'
+                            result['warnings'].append(f"Image not found: {full_img_path}")
+                            return result
+
+                        try:
+                            img = cv2.imread(full_img_path)
+                            if img is None:
+                                result['status'] = 'load_fail'
+                                result['warnings'].append(f"Could not load image: {full_img_path}")
+                                return result
+                            blur_count = 0
+                            for detection in detections:
+                                img, success = blur_region(
+                                    img,
+                                    detection['x'],
+                                    detection['y'],
+                                    detection['w'],
+                                    detection['h'],
+                                    full_img_path
+                                )
+                                if success:
+                                    blur_count += 1
+                            cv2.imwrite(output_path, img)
+                            exif_inject(full_img_path, output_path)
+                            result['status'] = 'processed'
+                            result['blur_count'] = blur_count
+                        except Exception as e:
+                            result['status'] = 'error'
+                            result['warnings'].append(f"Error processing {full_img_path}: {e}")
+                        return result
+
+                    # Prepare arguments for multiprocessing
+                    image_args = [
+                        (full_img_path, detections, parent_dir, output_dir)
+                        for full_img_path, detections in detections_by_image.items()
+                    ]
+                    total_images = len(image_args)
+
+                    # Use all available CPU cores
+                    cpu_count = multiprocessing.cpu_count()
+                    log_message(f"Using {cpu_count} CPU cores for parallel processing.")
+
+                    with multiprocessing.Pool(cpu_count) as pool:
+                        results = []
+                        for i, result in enumerate(pool.imap_unordered(process_image_worker, image_args), 1):
+                            percent = i / total_images
+                            bar_length = 40
+                            filled_length = int(bar_length * percent)
+                            bar = '█' * filled_length + '-' * (bar_length - filled_length)
+                            progress_msg = f"[{bar}] {int(percent*100)}% ({i}/{total_images})"
+                            print(progress_msg, end='\r')
+                            results.append(result)
+                        print()
+
+                    # Collect results
+                    processed_count = 0
+                    failed_images = []
+                    warning_list = []
+                    detection_count = 0
+                    for result in results:
+                        detection_count += result['blur_count']
+                        if result['status'] == 'processed':
+                            processed_count += 1
+                            log_message(f"✓ Processed: {result['img_path']} ({result['blur_count']} regions blurred)")
+                        elif result['status'] == 'skipped':
+                            log_message(f"⏩ Skipped (already processed): {result['img_path']}")
+                        else:
+                            failed_images.append(result['img_path'])
+                            for w in result['warnings']:
+                                warning_list.append(w)
+                                log_message(f"⚠ {w}")
     log_message("\n" + "="*70)
     log_message("PROCESSING SUMMARY")
     log_message("="*70)
