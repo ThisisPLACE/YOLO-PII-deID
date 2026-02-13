@@ -1,0 +1,4 @@
+#,image_path,class_id,x_center,y_center,width,height,confidence
+1,\scripts\blur\image1.jpg,0,0.656967,0.807094,0.062510,0.060177,0.721478
+2,\scripts\blur\image2.jpg,0,0.811487,0.569905,0.012730,0.025151,0.516127
+3,\scripts\blur\image3.jpg,1,0.976877,0.581589,0.017506,0.035869,0.466523
