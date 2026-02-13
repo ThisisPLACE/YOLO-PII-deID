@@ -1,0 +1,9 @@
+{
+  "input_dir": "D:\\PLACE - Zotac\\BGD\\Testing\\Testing Collection Stitched",
+  "output_dir": "D:\\PLACE - Zotac\\BGD\\Testing\\visualize_FN",
+  "crops_dir": "D:\\PLACE - Zotac\\BGD\\Testing\\crops_FN",
+  "save_crops": true,
+  "line_thickness": 2,
+  "font_scale": 0.6,
+  "jpg_quality": 85
+}

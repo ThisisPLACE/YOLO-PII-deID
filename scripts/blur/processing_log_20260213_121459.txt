@@ -1,7 +1,0 @@
-Starting blur processing...
-  CSV File: C:\Users\wadda\OneDrive\Desktop\WORK(4)\ThisIsPlace\TECHNOLOGY\SCRIPTS\yolo\YOLO_DEC2025\scripts\blur\test_file.txt
-  Parent Dir: C:\Users\wadda\OneDrive\Desktop\WORK(4)\ThisIsPlace\TECHNOLOGY\SCRIPTS\yolo\YOLO_DEC2025
-  Output Dir: C:\Users\wadda\OneDrive\Desktop\WORK(4)\ThisIsPlace\TECHNOLOGY\SCRIPTS\yolo\YOLO_DEC2025\scripts\blur
-
-Processing 3 images with 3 detections...
-
